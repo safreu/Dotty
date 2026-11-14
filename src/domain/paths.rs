@@ -2,10 +2,7 @@
 use crate::{domain::config::Configuration, persistence::read_toml};
 
 use super::{Error, Result};
-use std::{
-    path::{Path, PathBuf},
-    vec::IntoIter,
-};
+use std::path::PathBuf;
 pub struct StaticDottyPaths {
     /// Data directory (e.g `~/.local/share/dotty` on Linux).
     /// Holds backups.toml and `backups_dir`.
