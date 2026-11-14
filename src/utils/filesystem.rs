@@ -231,11 +231,6 @@ impl Filesystem for RealFileSystem {
     }
 }
 
-pub enum SimulatedEntry {
-    Present(PathKind),
-    Removed,
-}
-
 pub struct SimulatedFilesystem {
     entries: HashMap<PathBuf, PathKind>,
 }

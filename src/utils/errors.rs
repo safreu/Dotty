@@ -46,6 +46,10 @@ pub enum Error {
     UnsupportedFiletype(PathBuf),
     #[error("Directory must be empty: `{0}`")]
     DirNotEmpty(PathBuf),
+    #[error("destination `{to}` is inside source `{from}`")]
+    PathInsideSource { from: PathBuf, to: PathBuf },
+    #[error("path is not normalized: `{0}`")]
+    NotNormalized(PathBuf),
 }
 
 impl Error {

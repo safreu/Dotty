@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     domain::{Action, Plan},
-    utils::{Error, Filesystem, PathKind, RealFileSystem, SimulatedFilesystem},
+    utils::{Error, Filesystem, PathKind, PathValidator, RealFileSystem, SimulatedFilesystem},
 };
 
 pub struct SnapshotBuilder {
@@ -52,6 +52,9 @@ impl SnapshotBuilder {
 
     fn snapshot_path(&mut self, path: &Path) -> Result<()> {
         let fs = RealFileSystem;
+
+        PathValidator::require_normalized(path)?;
+        PathValidator::require_no_symlink_ancestors(&fs, path)?;
 
         for ancestor in path.ancestors() {
             if self.entries.contains_key(ancestor) {

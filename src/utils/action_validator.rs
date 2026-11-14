@@ -24,7 +24,9 @@ impl ActionValidator {
             Action::WriteFile { path, .. } => {
                 PathValidator::requires_home_relative(path)?;
                 PathValidator::requires_parent_dir(fs, path)?;
-                PathValidator::require_not_kind(fs, path, PathKind::Symlink)
+                PathValidator::require_not_kind(fs, path, PathKind::Directory)?;
+                PathValidator::require_not_kind(fs, path, PathKind::Symlink)?;
+                PathValidator::require_not_kind(fs, path, PathKind::Other)
             }
             Action::RemoveFile(path) => {
                 PathValidator::requires_home_relative(path)?;
@@ -35,6 +37,9 @@ impl ActionValidator {
                 PathValidator::requires_home_relative(from)?;
                 PathValidator::requires_home_relative(to)?;
                 PathValidator::requires_existence(fs, from)?;
+                if fs.kind(from)? == Some(PathKind::Directory) {
+                    PathValidator::require_outside_source(from, to)?;
+                };
                 PathValidator::requires_absent(fs, to)?;
                 PathValidator::requires_parent_dir(fs, to)
             }
@@ -60,6 +65,7 @@ impl ActionValidator {
             Action::CopyDirectory { from, to } => {
                 PathValidator::requires_home_relative(from)?;
                 PathValidator::requires_home_relative(to)?;
+                PathValidator::require_outside_source(from, to)?;
                 PathValidator::require_kind(fs, from, PathKind::Directory)?;
                 PathValidator::requires_absent(fs, to)?;
                 PathValidator::requires_parent_dir(fs, to)

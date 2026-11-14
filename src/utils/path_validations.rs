@@ -1,7 +1,7 @@
 use crate::utils::Filesystem;
 
 use super::{Error, Result};
-use std::path::Path;
+use std::path::{Component, Path};
 
 /// Contains various path validation methods.
 pub struct PathValidator;
@@ -61,6 +61,38 @@ impl PathValidator {
             true => Ok(()),
             false => Err(Error::DirNotEmpty(path.to_path_buf())),
         }
+    }
+
+    pub fn require_no_symlink_ancestors(fs: &impl Filesystem, path: &Path) -> Result<()> {
+        for ancestor in path.ancestors().skip(1) {
+            if fs.kind(ancestor)? == Some(PathKind::Symlink) {
+                return Err(Error::Symlink(ancestor.to_path_buf()));
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn require_outside_source(from: &Path, to: &Path) -> Result<()> {
+        if to.starts_with(from) {
+            return Err(Error::PathInsideSource {
+                from: from.to_path_buf(),
+                to: to.to_path_buf(),
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn require_normalized(path: &Path) -> Result<()> {
+        if path
+            .components()
+            .any(|component| matches!(component, Component::CurDir | Component::ParentDir))
+        {
+            return Err(Error::NotNormalized(path.to_path_buf()));
+        }
+
+        Ok(())
     }
 }
 
