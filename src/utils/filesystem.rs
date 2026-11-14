@@ -7,10 +7,12 @@ use std::{
     io::{self, Write},
     os::unix::fs::symlink,
     path::{Path, PathBuf},
-    thread::panicking,
 };
 
-use crate::{domain::FsOperation, utils::PathKind};
+use crate::{
+    domain::{Action, FsOperation},
+    utils::PathKind,
+};
 
 pub trait Filesystem {
     fn kind(&self, path: &Path) -> Result<Option<PathKind>>;
@@ -242,6 +244,20 @@ impl SimulatedFilesystem {
     pub fn new(entries: HashMap<PathBuf, PathKind>) -> Self {
         Self { entries }
     }
+
+    pub fn apply(&mut self, action: &Action) -> Result<()> {
+        match action {
+            Action::CreateDirectory(path) => self.create_directory(path),
+            Action::RemoveDirectory(path) => self.remove_directory(path),
+            Action::WriteFile { path, content } => self.write_file(path, content),
+            Action::RemoveFile(path) => self.remove_file(path),
+            Action::Rename { from, to } => self.rename(from, to),
+            Action::CreateSymlink { target, link } => self.create_symlink(target, link),
+            Action::RemoveSymlink(path) => self.remove_symlink(path),
+            Action::CopyFile { from, to } => self.copy_file(from, to),
+            Action::CopyDirectory { from, to } => self.copy_directory(from, to),
+        }
+    }
 }
 
 impl Filesystem for SimulatedFilesystem {
@@ -297,20 +313,42 @@ impl Filesystem for SimulatedFilesystem {
         Ok(())
     }
 
-    fn create_symlink(&mut self, _target: &Path, _link: &Path) -> Result<()> {
-        todo!()
+    fn create_symlink(&mut self, _target: &Path, link: &Path) -> Result<()> {
+        self.entries.insert(link.to_path_buf(), PathKind::Symlink);
+
+        Ok(())
     }
 
-    fn remove_symlink(&mut self, _path: &Path) -> Result<()> {
-        todo!()
+    fn remove_symlink(&mut self, path: &Path) -> Result<()> {
+        self.entries.remove(path);
+        Ok(())
     }
 
-    fn copy_file(&mut self, _from: &Path, _to: &Path) -> Result<()> {
-        todo!()
+    fn copy_file(&mut self, from: &Path, to: &Path) -> Result<()> {
+        if let Some(kind) = self.entries.get(from).copied() {
+            self.entries.insert(to.to_path_buf(), kind);
+        }
+
+        Ok(())
     }
 
-    fn copy_directory(&mut self, _from: &Path, _to: &Path) -> Result<()> {
-        todo!()
+    fn copy_directory(&mut self, from: &Path, to: &Path) -> Result<()> {
+        let affected: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|(path, _)| path.starts_with(from))
+            .map(|(path, kind)| (path.clone(), *kind))
+            .collect();
+
+        for (old, kind) in affected {
+            let relative = old.strip_prefix(from).expect("path must be within source");
+
+            let new = to.join(relative);
+
+            self.entries.insert(new, kind);
+        }
+
+        Ok(())
     }
 
     fn read_file(&mut self, _path: &Path) -> Result<Vec<u8>> {

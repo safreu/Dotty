@@ -15,8 +15,10 @@ pub struct SnapshotBuilder {
 }
 
 impl SnapshotBuilder {
-    pub fn new(entries: HashMap<PathBuf, PathKind>) -> Self {
-        Self { entries }
+    pub fn new() -> Self {
+        Self {
+            entries: HashMap::new(),
+        }
     }
 
     pub fn build(&mut self, plan: &Plan) -> Result<SimulatedFilesystem> {

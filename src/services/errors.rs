@@ -12,4 +12,7 @@ pub enum Error {
     Symlink(PathBuf),
     #[error("Dotty is not initialized yet. Run `dotty init <repos>`")]
     NotInitialized,
+
+    #[error(transparent)]
+    Utils(#[from] crate::utils::Error),
 }

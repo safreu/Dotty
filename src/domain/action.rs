@@ -4,7 +4,7 @@ pub enum Action {
     CreateDirectory(PathBuf),
     RemoveDirectory(PathBuf),
 
-    WriteFile { path: PathBuf, contents: Vec<u8> },
+    WriteFile { path: PathBuf, content: Vec<u8> },
     RemoveFile(PathBuf),
 
     Rename { from: PathBuf, to: PathBuf },

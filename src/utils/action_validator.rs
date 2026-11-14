@@ -42,7 +42,8 @@ impl ActionValidator {
                 PathValidator::requires_home_relative(target)?;
                 PathValidator::requires_home_relative(link)?;
                 PathValidator::requires_existence(fs, target)?;
-                PathValidator::requires_absent(fs, link)
+                PathValidator::requires_absent(fs, link)?;
+                PathValidator::requires_parent_dir(fs, link)
             }
             Action::RemoveSymlink(path) => {
                 PathValidator::requires_home_relative(path)?;
@@ -52,16 +53,16 @@ impl ActionValidator {
             Action::CopyFile { from, to } => {
                 PathValidator::requires_home_relative(from)?;
                 PathValidator::requires_home_relative(to)?;
-                PathValidator::requires_existence(fs, from)?;
-                PathValidator::requires_absent(fs, to)
+                PathValidator::require_kind(fs, from, PathKind::File)?;
+                PathValidator::requires_absent(fs, to)?;
+                PathValidator::requires_parent_dir(fs, to)
             }
             Action::CopyDirectory { from, to } => {
                 PathValidator::requires_home_relative(from)?;
                 PathValidator::requires_home_relative(to)?;
                 PathValidator::require_kind(fs, from, PathKind::Directory)?;
-                PathValidator::requires_existence(fs, from)?;
-
-                PathValidator::requires_absent(fs, to)
+                PathValidator::requires_absent(fs, to)?;
+                PathValidator::requires_parent_dir(fs, to)
             }
         }
     }
