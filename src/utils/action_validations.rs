@@ -35,7 +35,8 @@ impl ActionValidator {
                 PathValidator::requires_home_relative(from)?;
                 PathValidator::requires_home_relative(to)?;
                 PathValidator::requires_existence(fs, from)?;
-                PathValidator::requires_absent(fs, to)
+                PathValidator::requires_absent(fs, to)?;
+                PathValidator::requires_parent_dir(fs, to)
             }
             Action::CreateSymlink { target, link } => {
                 PathValidator::requires_home_relative(target)?;

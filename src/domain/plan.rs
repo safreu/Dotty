@@ -65,4 +65,8 @@ impl Plan {
 
         Ok(missing)
     }
+
+    pub fn actions(&self) -> &[Action] {
+        &self.actions
+    }
 }

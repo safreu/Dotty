@@ -7,6 +7,7 @@ use std::{
     io::{self, Write},
     os::unix::fs::symlink,
     path::{Path, PathBuf},
+    thread::panicking,
 };
 
 use crate::{domain::FsOperation, utils::PathKind};
@@ -275,8 +276,25 @@ impl Filesystem for SimulatedFilesystem {
         Ok(())
     }
 
-    fn rename(&mut self, _from: &Path, _to: &Path) -> Result<()> {
-        todo!()
+    fn rename(&mut self, from: &Path, to: &Path) -> Result<()> {
+        let affected: Vec<_> = self
+            .entries
+            .keys()
+            .filter(|path| path.starts_with(from))
+            .cloned()
+            .collect();
+
+        for old in affected {
+            let relative = old.strip_prefix(from).expect("path must be within source");
+
+            let new = to.join(relative);
+
+            if let Some(kind) = self.entries.remove(&old) {
+                self.entries.insert(new, kind);
+            };
+        }
+
+        Ok(())
     }
 
     fn create_symlink(&mut self, _target: &Path, _link: &Path) -> Result<()> {
