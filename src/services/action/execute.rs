@@ -1,5 +1,5 @@
-use super::Result;
-use crate::{domain::Action, utils::Filesystem};
+use crate::services::Result;
+use crate::{domain::Action, filesystem::Filesystem};
 
 pub struct ActionExecutor;
 
@@ -15,6 +15,8 @@ impl ActionExecutor {
             Action::RemoveSymlink(path) => fs.remove_symlink(path),
             Action::CopyFile { from, to } => fs.copy_file(from, to),
             Action::CopyDirectory { from, to } => fs.copy_directory(from, to),
-        }
+        }?;
+
+        Ok(())
     }
 }

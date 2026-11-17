@@ -1,3 +1,4 @@
+use crate::persistence::Error as PersistenceError;
 use std::path::PathBuf;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -8,13 +9,42 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Env(#[from] std::env::VarError),
-    #[error("Path is not allowed as symlink: `{0}")]
-    Symlink(PathBuf),
-    #[error("Dotty is not initialized yet. Run `dotty init <repos>`")]
-    NotInitialized,
+
+    #[error("expected directory at `{path}`")]
+    InvalidDirectory { path: PathBuf },
+    #[error("path `{target}` is outside root `{root}`")]
+    PathOutsideRoot { root: PathBuf, target: PathBuf },
 
     #[error(transparent)]
-    Utils(#[from] crate::utils::Error),
-    #[error(transparent)]
     Domain(#[from] crate::domain::Error),
+    #[error(transparent)]
+    Filesystem(#[from] crate::filesystem::Error),
+
+    #[error(transparent)]
+    Persistence(#[from] PersistenceError),
+
+    #[error("Path has to be relative to home: `{0}")]
+    NotHomeRelative(PathBuf),
+    #[error("Path is not allowed as symlink: `{0}")]
+    Symlink(PathBuf),
+    #[error("Path needs a parent directory: `{0}")]
+    MissingParent(PathBuf),
+    #[error("Path is not allowed to exist yet: `{0}`")]
+    PathExists(PathBuf),
+    #[error("Path does not exist: `{0}`")]
+    PathNotExists(PathBuf),
+    #[error("Unsupported filetype: `{0}`")]
+    UnsupportedFiletype(PathBuf),
+    #[error("Directory must be empty: `{0}`")]
+    DirNotEmpty(PathBuf),
+    #[error("destination `{to}` is inside source `{from}`")]
+    PathInsideSource { from: PathBuf, to: PathBuf },
+    #[error("path is not normalized: `{0}`")]
+    NotNormalized(PathBuf),
+
+    #[error("Unable to determine base directories")]
+    BaseDirectories,
+
+    #[error("dotfiles directory must be an absolute path: `{0}`")]
+    InvalidDotfilesPath(PathBuf),
 }

@@ -1,43 +1,17 @@
-use atomic_write_file::{AtomicWriteFile, unix::OpenOptionsExt};
-
 use super::{Error, Result};
+use crate::filesystem::{Filesystem, FsOperation, PathKind};
 use std::{
-    collections::HashMap,
     fs,
     io::{self, Write},
     os::unix::fs::symlink,
     path::{Path, PathBuf},
 };
 
-use crate::{
-    domain::{Action, FsOperation},
-    utils::{ActionExecutor, PathKind},
-};
-
-pub trait Filesystem {
-    fn kind(&self, path: &Path) -> Result<Option<PathKind>>;
-    fn is_empty_dir(&self, path: &Path) -> Result<bool>;
-
-    fn create_directory(&mut self, path: &Path) -> Result<()>;
-    fn remove_directory(&mut self, path: &Path) -> Result<()>;
-    fn write_file(&mut self, path: &Path, content: &[u8]) -> Result<()>;
-    fn read_file(&mut self, path: &Path) -> Result<Vec<u8>>;
-    fn remove_file(&mut self, path: &Path) -> Result<()>;
-    fn rename(&mut self, from: &Path, to: &Path) -> Result<()>;
-    fn create_symlink(&mut self, target: &Path, link: &Path) -> Result<()>;
-    fn read_symlink(&mut self, path: &Path) -> Result<PathBuf>;
-    fn remove_symlink(&mut self, path: &Path) -> Result<()>;
-    fn copy_file(&mut self, from: &Path, to: &Path) -> Result<()>;
-    fn copy_directory(&mut self, from: &Path, to: &Path) -> Result<()>;
-}
+use atomic_write_file::{AtomicWriteFile, unix::OpenOptionsExt};
 
 pub struct RealFileSystem;
 
 impl RealFileSystem {
-    pub fn apply(&mut self, action: &Action) -> Result<()> {
-        ActionExecutor::execute(self, action)
-    }
-
     fn copy_dir_impl(&mut self, from: &Path, to: &Path) -> std::io::Result<()> {
         let parent = to.parent().ok_or_else(|| {
             std::io::Error::new(
@@ -232,119 +206,5 @@ impl Filesystem for RealFileSystem {
     fn copy_directory(&mut self, from: &Path, to: &Path) -> Result<()> {
         self.copy_dir_impl(from, to)
             .map_err(Error::io_double(FsOperation::CopyDir, from, to))
-    }
-}
-
-pub struct SimulatedFilesystem {
-    entries: HashMap<PathBuf, PathKind>,
-}
-
-impl SimulatedFilesystem {
-    pub fn new(entries: HashMap<PathBuf, PathKind>) -> Self {
-        Self { entries }
-    }
-
-    pub fn apply(&mut self, action: &Action) -> Result<()> {
-        ActionExecutor::execute(self, action)
-    }
-}
-
-impl Filesystem for SimulatedFilesystem {
-    fn kind(&self, path: &Path) -> Result<Option<PathKind>> {
-        Ok(self.entries.get(path).copied())
-    }
-
-    fn is_empty_dir(&self, path: &Path) -> Result<bool> {
-        Ok(!self
-            .entries
-            .keys()
-            .any(|entry| entry.parent() == Some(path)))
-    }
-
-    fn create_directory(&mut self, path: &Path) -> Result<()> {
-        self.entries.insert(path.to_path_buf(), PathKind::Directory);
-        Ok(())
-    }
-
-    fn remove_directory(&mut self, path: &Path) -> Result<()> {
-        self.entries.remove(path);
-        Ok(())
-    }
-
-    fn write_file(&mut self, path: &Path, _content: &[u8]) -> Result<()> {
-        self.entries.insert(path.to_path_buf(), PathKind::File);
-        Ok(())
-    }
-
-    fn remove_file(&mut self, path: &Path) -> Result<()> {
-        self.entries.remove(path);
-        Ok(())
-    }
-
-    fn rename(&mut self, from: &Path, to: &Path) -> Result<()> {
-        let affected: Vec<_> = self
-            .entries
-            .keys()
-            .filter(|path| path.starts_with(from))
-            .cloned()
-            .collect();
-
-        for old in affected {
-            let relative = old.strip_prefix(from).expect("path must be within source");
-
-            let new = to.join(relative);
-
-            if let Some(kind) = self.entries.remove(&old) {
-                self.entries.insert(new, kind);
-            };
-        }
-
-        Ok(())
-    }
-
-    fn create_symlink(&mut self, _target: &Path, link: &Path) -> Result<()> {
-        self.entries.insert(link.to_path_buf(), PathKind::Symlink);
-
-        Ok(())
-    }
-
-    fn remove_symlink(&mut self, path: &Path) -> Result<()> {
-        self.entries.remove(path);
-        Ok(())
-    }
-
-    fn copy_file(&mut self, from: &Path, to: &Path) -> Result<()> {
-        if let Some(kind) = self.entries.get(from).copied() {
-            self.entries.insert(to.to_path_buf(), kind);
-        }
-
-        Ok(())
-    }
-
-    fn copy_directory(&mut self, from: &Path, to: &Path) -> Result<()> {
-        let affected: Vec<_> = self
-            .entries
-            .iter()
-            .filter(|(path, _)| path.starts_with(from))
-            .map(|(path, kind)| (path.clone(), *kind))
-            .collect();
-
-        for (old, kind) in affected {
-            let relative = old.strip_prefix(from).expect("path must be within source");
-
-            let new = to.join(relative);
-
-            self.entries.insert(new, kind);
-        }
-
-        Ok(())
-    }
-
-    fn read_file(&mut self, _path: &Path) -> Result<Vec<u8>> {
-        todo!()
-    }
-
-    fn read_symlink(&mut self, _path: &Path) -> Result<PathBuf> {
-        todo!()
     }
 }

@@ -1,9 +1,9 @@
 use crate::{
     domain::Plan,
-    utils::{ActionValidator, SnapshotBuilder},
+    services::{ActionExecutor, ActionValidator, snapshot::SnapshotBuilder},
 };
 
-use super::Result;
+use crate::services::Result;
 
 pub struct PlanValidator;
 
@@ -13,7 +13,7 @@ impl PlanValidator {
 
         for action in plan.actions() {
             ActionValidator::validate(&simulated, action)?;
-            simulated.apply(action)?;
+            ActionExecutor::execute(&mut simulated, action)?;
         }
 
         Ok(())

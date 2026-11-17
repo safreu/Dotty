@@ -1,7 +1,4 @@
 //! Manages the paths dotty uses internally.
-use crate::{domain::config::Configuration, persistence::read_toml};
-
-use super::{Error, Result};
 use std::path::PathBuf;
 
 pub struct StaticDottyPaths {
@@ -23,6 +20,15 @@ pub struct StaticDottyPaths {
 }
 
 impl StaticDottyPaths {
+    pub fn new(share_dir: PathBuf, state_dir: PathBuf, config_dir: PathBuf) -> Self {
+        Self {
+            backups_dir: share_dir.join("backups"),
+            share_dir,
+            state_dir,
+            config_dir,
+        }
+    }
+
     pub fn share_dir(&self) -> &PathBuf {
         &self.share_dir
     }
@@ -49,44 +55,6 @@ impl StaticDottyPaths {
 
     pub fn manifest_toml(&self) -> PathBuf {
         self.config_dir.join("manifest.toml")
-    }
-
-    /// Constructs the internally used paths from XDG variables.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::BaseDirectories`] if XDG variables are not set.
-    pub fn new() -> Result<Self> {
-        let project_dirs =
-            directories::ProjectDirs::from("", "", "dotty").ok_or(Error::BaseDirectories)?;
-
-        let share_dir = project_dirs.data_dir();
-        let state_dir = project_dirs.state_dir().ok_or(Error::BaseDirectories)?;
-        let config_dir = project_dirs.config_dir();
-
-        Ok(Self {
-            share_dir: share_dir.to_path_buf(),
-            state_dir: state_dir.to_path_buf(),
-            backups_dir: share_dir.join("backups"),
-            config_dir: config_dir.to_path_buf(),
-        })
-    }
-
-    /// Resolves the path to `dotfiles_dir` from the on-disk `config.toml`.
-    ///
-    /// # Errors
-    ///
-    /// Return [`Error::Persistence`] if `config.toml` does not exist yet.
-    pub fn load(self) -> Result<DottyPaths> {
-        let config: Configuration = read_toml(&self.config_toml())?;
-        let dotfiles_dir = config.dotfiles_dir();
-
-        Ok(DottyPaths {
-            static_dirs: self,
-            dynamic_dirs: DynamicDottyPaths {
-                dotfiles_dir: dotfiles_dir.to_path_buf(),
-            },
-        })
     }
 }
 

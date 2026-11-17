@@ -1,4 +1,4 @@
-use super::Result;
+use crate::services::{Result, snapshot::validate::SnapshotValidator};
 use std::{
     collections::HashMap,
     fs,
@@ -7,8 +7,10 @@ use std::{
 
 use crate::{
     domain::{Action, Plan},
-    utils::{Error, Filesystem, PathKind, PathValidator, RealFileSystem, SimulatedFilesystem},
+    filesystem::{self, Filesystem, FsOperation, PathKind, RealFileSystem, SimulatedFilesystem},
 };
+
+use filesystem::Error as FilesystemError;
 
 pub struct SnapshotBuilder {
     entries: HashMap<PathBuf, PathKind>,
@@ -53,8 +55,7 @@ impl SnapshotBuilder {
     fn snapshot_path(&mut self, path: &Path) -> Result<()> {
         let fs = RealFileSystem;
 
-        PathValidator::require_normalized(path)?;
-        PathValidator::require_no_symlink_ancestors(&fs, path)?;
+        SnapshotValidator::validate(&fs, path)?;
 
         for ancestor in path.ancestors() {
             if self.entries.contains_key(ancestor) {
@@ -78,11 +79,10 @@ impl SnapshotBuilder {
             return Ok(());
         }
 
-        for entry in fs::read_dir(path)
-            .map_err(Error::io_single(crate::domain::FsOperation::Inspect, path))?
+        for entry in
+            fs::read_dir(path).map_err(FilesystemError::io_single(FsOperation::Inspect, path))?
         {
-            let entry =
-                entry.map_err(Error::io_single(crate::domain::FsOperation::Inspect, path))?;
+            let entry = entry.map_err(FilesystemError::io_single(FsOperation::Inspect, path))?;
 
             self.snapshot_path(&entry.path())?;
         }
@@ -97,11 +97,10 @@ impl SnapshotBuilder {
             return Ok(());
         }
 
-        for entry in fs::read_dir(path)
-            .map_err(Error::io_single(crate::domain::FsOperation::Inspect, path))?
+        for entry in
+            fs::read_dir(path).map_err(FilesystemError::io_single(FsOperation::Inspect, path))?
         {
-            let entry =
-                entry.map_err(Error::io_single(crate::domain::FsOperation::Inspect, path))?;
+            let entry = entry.map_err(FilesystemError::io_single(FsOperation::Inspect, path))?;
 
             let child = entry.path();
             self.snapshot_tree(&child)?;

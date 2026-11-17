@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::domain::FsOperation;
+use crate::filesystem::FsOperation;
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, crate::filesystem::Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -25,31 +25,6 @@ pub enum Error {
 
     #[error("cannot write to unsupported filesystem entry: `{path}`")]
     InvalidWriteTarget { path: PathBuf },
-
-    #[error(transparent)]
-    Env(#[from] std::env::VarError),
-    #[error("Path has to be relative: `{0}")]
-    AbsolutePath(PathBuf),
-    #[error("Path has to be relative to home: `{0}")]
-    NotHomeRelative(PathBuf),
-    #[error("Path is not allowed as symlink: `{0}")]
-    Symlink(PathBuf),
-    #[error("Dotty is not initialized yet. Run `dotty init <repos>`")]
-    NotInitialized,
-    #[error("Path needs a parent directory: `{0}")]
-    MissingParent(PathBuf),
-    #[error("Path is not allowed to exist yet: `{0}`")]
-    PathExists(PathBuf),
-    #[error("Path does not exist: `{0}`")]
-    PathNotExists(PathBuf),
-    #[error("Unsupported filetype: `{0}`")]
-    UnsupportedFiletype(PathBuf),
-    #[error("Directory must be empty: `{0}`")]
-    DirNotEmpty(PathBuf),
-    #[error("destination `{to}` is inside source `{from}`")]
-    PathInsideSource { from: PathBuf, to: PathBuf },
-    #[error("path is not normalized: `{0}`")]
-    NotNormalized(PathBuf),
 }
 
 impl Error {

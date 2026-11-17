@@ -1,16 +1,10 @@
-use crate::{
-    domain::Plan,
-    services::plan_validator::PlanValidator,
-    utils::{ActionExecutor, RealFileSystem},
-};
+use crate::{domain::Plan, filesystem::RealFileSystem, services::ActionExecutor};
 
-use super::Result;
+use crate::services::Result;
 pub struct PlanExecutor;
 
 impl PlanExecutor {
     pub fn execute(plan: &Plan) -> Result<()> {
-        PlanValidator::validate(plan)?;
-
         let mut fs = RealFileSystem;
 
         for action in plan.actions() {

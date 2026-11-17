@@ -1,4 +1,4 @@
-use super::Result;
+use crate::services::Result;
 use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
@@ -9,7 +9,8 @@ use crate::{
         Action::{self, CreateDirectory},
         Plan,
     },
-    utils::Filesystem,
+    filesystem::{Filesystem, PathKind},
+    services::Error,
 };
 
 pub struct PlanBuilder {
@@ -47,7 +48,7 @@ impl PlanBuilder {
         root: &Path,
         target: &Path,
     ) -> Result<Self> {
-        for directory in Plan::missing_directories(fs, root, target)? {
+        for directory in Self::missing_directories(fs, root, target)? {
             self.directories.insert(directory);
         }
 
@@ -87,5 +88,42 @@ impl PlanBuilder {
             path: path.to_path_buf(),
             content,
         })
+    }
+
+    fn missing_directories(
+        fs: &impl Filesystem,
+        root: &Path,
+        target: &Path,
+    ) -> Result<Vec<PathBuf>> {
+        let mut current = root.to_path_buf();
+        let mut missing = Vec::new();
+
+        match fs.kind(root)? {
+            Some(PathKind::Directory) => {}
+            _ => {
+                return Err(Error::InvalidDirectory {
+                    path: root.to_path_buf(),
+                });
+            }
+        };
+
+        let relative = target
+            .strip_prefix(root)
+            .map_err(|_| Error::PathOutsideRoot {
+                root: root.to_path_buf(),
+                target: target.to_path_buf(),
+            })?;
+
+        for component in relative.components() {
+            current.push(component);
+
+            match fs.kind(&current)? {
+                Some(PathKind::Directory) => {}
+                None => missing.push(current.clone()),
+                Some(_) => return Err(Error::InvalidDirectory { path: current }),
+            }
+        }
+
+        Ok(missing)
     }
 }
