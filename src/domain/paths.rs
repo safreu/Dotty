@@ -2,10 +2,8 @@
 use crate::{domain::config::Configuration, persistence::read_toml};
 
 use super::{Error, Result};
-use std::{
-    path::{Path, PathBuf},
-    vec::IntoIter,
-};
+use std::path::PathBuf;
+
 pub struct StaticDottyPaths {
     /// Data directory (e.g `~/.local/share/dotty` on Linux).
     /// Holds backups.toml and `backups_dir`.
@@ -110,6 +108,15 @@ pub struct DottyPaths {
 }
 
 impl DottyPaths {
+    /// Constructs an instance of `DottyPaths`.
+    /// Only use it for initializing Dotty, after initializing `DottyPaths` can be constructed using `StaticDottyPaths::new()?.load()`
+    pub fn initialize(static_dirs: StaticDottyPaths, dotfiles_dir: PathBuf) -> DottyPaths {
+        DottyPaths {
+            static_dirs,
+            dynamic_dirs: DynamicDottyPaths { dotfiles_dir },
+        }
+    }
+
     pub fn static_dirs(&self) -> &StaticDottyPaths {
         &self.static_dirs
     }

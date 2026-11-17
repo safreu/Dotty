@@ -3,27 +3,9 @@ use crate::{domain::DottyPaths, services::errors::Error};
 
 use super::Result;
 
-use std::{path::Path, thread::panicking};
-
 pub struct PathValidator;
 
-impl PathValidator {
-    pub fn is_home_relative(path: &Path) -> Result<bool> {
-        if !path.is_relative() {
-            return Ok(false);
-        }
-
-        let home = Path::new(&std::env::var("HOME")?).to_path_buf();
-
-        let relative_path = home.join(path);
-
-        if !relative_path.exists() {
-            return Ok(false);
-        };
-
-        Ok(true)
-    }
-}
+impl PathValidator {}
 pub struct InitValidator;
 
 impl InitValidator {

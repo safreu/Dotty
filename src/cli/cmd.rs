@@ -54,7 +54,7 @@ pub struct ManageArgs {
     #[arg(value_hint = ValueHint::AnyPath)]
     pub target: PathBuf,
 
-    /// as can be used to rename the file/dir you will manage by dotty
+    /// `as` can be used to rename the file/dir you will manage by dotty
     /// This can be used to avoid conflicts in case you want to manage multiple files with the same name,
     /// or if you just want a name which is more telling then just config for example.
     #[arg(long = "as", value_hint = ValueHint::AnyPath)]

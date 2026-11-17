@@ -8,16 +8,13 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Env(#[from] std::env::VarError),
-
-    #[error("Path has to be relative: `{0}")]
-    AbsolutePath(PathBuf),
-
-    #[error("Path has to be relative to home: `{0}")]
-    NotHomeRelative(PathBuf),
-
     #[error("Path is not allowed as symlink: `{0}")]
     Symlink(PathBuf),
-
     #[error("Dotty is not initialized yet. Run `dotty init <repos>`")]
     NotInitialized,
+
+    #[error(transparent)]
+    Utils(#[from] crate::utils::Error),
+    #[error(transparent)]
+    Domain(#[from] crate::domain::Error),
 }
