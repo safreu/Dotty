@@ -15,4 +15,6 @@ pub enum Error {
 
     #[error(transparent)]
     Utils(#[from] crate::utils::Error),
+    #[error(transparent)]
+    Domain(#[from] crate::domain::Error),
 }

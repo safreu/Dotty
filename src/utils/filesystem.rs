@@ -11,7 +11,7 @@ use std::{
 
 use crate::{
     domain::{Action, FsOperation},
-    utils::PathKind,
+    utils::{ActionExecutor, PathKind},
 };
 
 pub trait Filesystem {
@@ -34,6 +34,10 @@ pub trait Filesystem {
 pub struct RealFileSystem;
 
 impl RealFileSystem {
+    pub fn apply(&mut self, action: &Action) -> Result<()> {
+        ActionExecutor::execute(self, action)
+    }
+
     fn copy_dir_impl(&mut self, from: &Path, to: &Path) -> std::io::Result<()> {
         let parent = to.parent().ok_or_else(|| {
             std::io::Error::new(
@@ -241,17 +245,7 @@ impl SimulatedFilesystem {
     }
 
     pub fn apply(&mut self, action: &Action) -> Result<()> {
-        match action {
-            Action::CreateDirectory(path) => self.create_directory(path),
-            Action::RemoveDirectory(path) => self.remove_directory(path),
-            Action::WriteFile { path, content } => self.write_file(path, content),
-            Action::RemoveFile(path) => self.remove_file(path),
-            Action::Rename { from, to } => self.rename(from, to),
-            Action::CreateSymlink { target, link } => self.create_symlink(target, link),
-            Action::RemoveSymlink(path) => self.remove_symlink(path),
-            Action::CopyFile { from, to } => self.copy_file(from, to),
-            Action::CopyDirectory { from, to } => self.copy_directory(from, to),
-        }
+        ActionExecutor::execute(self, action)
     }
 }
 

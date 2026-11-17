@@ -19,4 +19,16 @@ pub enum Error {
     InvalidDirectory { path: PathBuf },
     #[error("path `{target}` is outside root `{root}`")]
     PathOutsideRoot { root: PathBuf, target: PathBuf },
+    #[error("managed path must not be empty")]
+    EmptyManagedPath,
+    #[error("managed path must be relative: `{0}`")]
+    AbsoluteManagedPath(PathBuf),
+    #[error("managed path must not contain parent traversal: `{0}`")]
+    ManagedPathTraversal(PathBuf),
+    #[error("managed target `{new}` conflicts with existing target `{existing}`")]
+    ManagedTargetConflict { existing: PathBuf, new: PathBuf },
+    #[error("managed source `{new}` conflicts with existing source `{existing}`")]
+    ManagedSourceConflict { existing: PathBuf, new: PathBuf },
+    #[error("unsupported filetype: {0}")]
+    UnsupportedFiletype(PathBuf),
 }
