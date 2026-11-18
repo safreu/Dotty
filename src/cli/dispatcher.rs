@@ -1,9 +1,7 @@
 use clap::Parser as _;
 
 use crate::{
-    cli::{
-        CliCmd, CliSubCmd, Result, exec_apply, exec_completions, exec_exile, exec_list, exec_test,
-    },
+    cli::{CliCmd, CliSubCmd, Result},
     handlers::{self, ManageHandler},
 };
 
@@ -18,11 +16,11 @@ pub fn dispatch() -> Result<()> {
 
     match sub_cmd {
         CliSubCmd::Init(args) => handlers::InitHandler::execute(args.path),
-        CliSubCmd::Completions(args) => exec_completions::execute(args),
+        CliSubCmd::Completions(args) => handlers::CompletionsHandler::execute(args.shell),
         CliSubCmd::Manage(args) => ManageHandler::execute(args.target, args.source),
-        CliSubCmd::Exile(args) => exec_exile::execute(args),
-        CliSubCmd::Test(args) => exec_test::execute(args),
-        CliSubCmd::List => exec_list::execute(),
-        CliSubCmd::Apply => exec_apply::execute(),
+        CliSubCmd::Exile(args) => handlers::ExileHandler::execute(args.path),
+        CliSubCmd::Test(args) => handlers::TestHandler::execute(args.path),
+        CliSubCmd::List => handlers::ListHandler::execute(),
+        CliSubCmd::Apply => handlers::ApplyHandler::execute(),
     }
 }

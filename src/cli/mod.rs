@@ -1,10 +1,5 @@
 mod cmd;
 mod dispatcher;
-mod exec_apply;
-mod exec_completions;
-mod exec_exile;
-mod exec_list;
-mod exec_test;
 
 use cmd::*;
 
