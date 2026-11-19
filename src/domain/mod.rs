@@ -1,4 +1,5 @@
 mod action;
+mod backup;
 mod config;
 mod errors;
 mod managed_entry;
@@ -6,8 +7,11 @@ mod managed_path;
 mod manifest;
 mod paths;
 mod plan;
+mod rollback;
+mod snapshot_entry;
 
 pub use action::*;
+pub use backup::*;
 pub use config::*;
 pub use errors::*;
 pub use managed_entry::*;
@@ -15,3 +19,5 @@ pub use managed_path::*;
 pub use manifest::*;
 pub use paths::*;
 pub use plan::*;
+pub use rollback::*;
+pub use snapshot_entry::*;

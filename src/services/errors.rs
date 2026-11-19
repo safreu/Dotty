@@ -1,4 +1,4 @@
-use crate::persistence::Error as PersistenceError;
+use crate::{domain::BackupId, persistence::Error as PersistenceError};
 use std::path::PathBuf;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -47,4 +47,25 @@ pub enum Error {
 
     #[error("dotfiles directory must be an absolute path: `{0}`")]
     InvalidDotfilesPath(PathBuf),
+
+    #[error("missing backup for `{0}`")]
+    MissingBackup(PathBuf),
+
+    #[error("plan execution failed: {original}; rollback failed: {rollback}")]
+    RollbackFailed {
+        original: Box<Error>,
+        rollback: Box<Error>,
+    },
+
+    #[error("rollback-only action cannot appear in a regular plan")]
+    RollbackOnlyAction,
+
+    #[error("backup with ID {0} not found")]
+    BackupNotFound(BackupId),
+
+    #[error("plan execution failed: {original}; updating backup status failed: {status}")]
+    BackupStatusUpdateFailed {
+        original: Box<Error>,
+        status: Box<Error>,
+    },
 }

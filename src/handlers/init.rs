@@ -1,8 +1,8 @@
 use crate::{
-    domain::{Configuration, DottyPaths, Manifest},
+    domain::{Backups, Configuration, DottyPaths, Manifest},
     filesystem::RealFileSystem,
     persistence::serialize_toml,
-    services::{InitValidator, PathsLoader, PlanBuilder, PlanService},
+    services::{InitValidator, PathsLoader, PlanBuilder, PlanExecutor, PlanValidator},
 };
 
 use super::Result;
@@ -29,14 +29,18 @@ impl InitHandler {
 
         let plan = builder
             .write_file(&paths.static_dirs().config_toml(), serialize_toml(&config)?)
-            .write_file(&paths.static_dirs().backups_toml(), Vec::new())
+            .write_file(
+                &paths.static_dirs().backups_toml(),
+                serialize_toml(&Backups::new())?,
+            )
             .write_file(
                 &paths.static_dirs().manifest_toml(),
                 serialize_toml(&Manifest::new())?,
             )
             .build();
 
-        PlanService::run(&plan)?;
+        PlanValidator::validate(&plan)?;
+        PlanExecutor::execute(&plan)?;
 
         Ok(())
     }

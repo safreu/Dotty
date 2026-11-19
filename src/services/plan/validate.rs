@@ -1,9 +1,9 @@
 use crate::{
-    domain::Plan,
+    domain::{Action, Plan},
     services::{ActionExecutor, ActionValidator, snapshot::SnapshotBuilder},
 };
 
-use crate::services::Result;
+use crate::services::{Error, Result};
 
 pub struct PlanValidator;
 
@@ -12,6 +12,9 @@ impl PlanValidator {
         let mut simulated = SnapshotBuilder::new().build(plan)?;
 
         for action in plan.actions() {
+            if matches!(action, Action::RemoveDirectoryAll(_)) {
+                return Err(Error::RollbackOnlyAction);
+            }
             ActionValidator::validate(&simulated, action)?;
             ActionExecutor::execute(&mut simulated, action)?;
         }

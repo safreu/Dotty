@@ -15,12 +15,15 @@ impl ActionValidator {
                 PathRules::requires_absent(fs, path)?;
                 PathRules::requires_parent_dir(fs, path)
             }
-
             Action::RemoveDirectory(path) => {
                 PathRules::requires_home_relative(path)?;
                 PathRules::requires_existence(fs, path)?;
                 PathRules::require_kind(fs, path, PathKind::Directory)?;
                 PathRules::require_empty_dir(fs, path)
+            }
+            Action::RemoveDirectoryAll(path) => {
+                PathRules::requires_home_relative(path)?;
+                PathRules::require_kind(fs, path, PathKind::Directory)
             }
             Action::WriteFile { path, .. } => {
                 PathRules::requires_home_relative(path)?;
@@ -44,12 +47,17 @@ impl ActionValidator {
                 PathRules::requires_absent(fs, to)?;
                 PathRules::requires_parent_dir(fs, to)
             }
-            Action::CreateSymlink { target, link } => {
-                PathRules::requires_home_relative(target)?;
+            Action::CreateSymlink { target: _, link } => {
                 PathRules::requires_home_relative(link)?;
-                PathRules::requires_existence(fs, target)?;
                 PathRules::requires_absent(fs, link)?;
                 PathRules::requires_parent_dir(fs, link)
+            }
+            Action::CopySymlink { from, to } => {
+                PathRules::requires_home_relative(from)?;
+                PathRules::requires_home_relative(to)?;
+                PathRules::require_kind(fs, from, PathKind::Symlink)?;
+                PathRules::requires_absent(fs, to)?;
+                PathRules::requires_parent_dir(fs, to)
             }
             Action::RemoveSymlink(path) => {
                 PathRules::requires_home_relative(path)?;

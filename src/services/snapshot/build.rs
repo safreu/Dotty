@@ -1,4 +1,7 @@
-use crate::services::{Result, snapshot::validate::SnapshotValidator};
+use crate::{
+    domain::SnapshotEntry,
+    services::{Result, snapshot::validate::SnapshotValidator},
+};
 use std::{
     collections::HashMap,
     fs,
@@ -13,7 +16,7 @@ use crate::{
 use filesystem::Error as FilesystemError;
 
 pub struct SnapshotBuilder {
-    entries: HashMap<PathBuf, PathKind>,
+    entries: HashMap<PathBuf, SnapshotEntry>,
 }
 
 impl SnapshotBuilder {
@@ -32,13 +35,14 @@ impl SnapshotBuilder {
                 | Action::RemoveSymlink(path) => self.snapshot_path(path)?,
 
                 Action::RemoveDirectory(path) => self.snapshot_children(path)?,
+                Action::RemoveDirectoryAll(path) => self.snapshot_tree(path)?,
 
                 Action::Rename { from, to } | Action::CopyDirectory { from, to } => {
                     self.snapshot_tree(from)?;
                     self.snapshot_path(to)?;
                 }
 
-                Action::CopyFile { from, to } => {
+                Action::CopyFile { from, to } | Action::CopySymlink { from, to } => {
                     self.snapshot_path(from)?;
                     self.snapshot_path(to)?;
                 }
@@ -63,7 +67,10 @@ impl SnapshotBuilder {
             }
 
             if let Some(kind) = fs.kind(ancestor)? {
-                self.entries.insert(ancestor.to_path_buf(), kind);
+                self.entries.insert(
+                    ancestor.to_path_buf(),
+                    SnapshotEntry::new(kind, Some(ancestor.to_path_buf())),
+                );
             }
         }
 
@@ -93,7 +100,7 @@ impl SnapshotBuilder {
     fn snapshot_tree(&mut self, path: &Path) -> Result<()> {
         self.snapshot_path(path)?;
 
-        if self.entries.get(path) != Some(&PathKind::Directory) {
+        if self.entries.get(path).map(SnapshotEntry::kind) != Some(PathKind::Directory) {
             return Ok(());
         }
 

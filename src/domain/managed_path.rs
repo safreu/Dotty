@@ -1,5 +1,8 @@
 use super::{Error, Result};
-use std::path::{Component, Path, PathBuf};
+use std::{
+    os::unix::ffi::OsStrExt,
+    path::{Component, Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +24,14 @@ impl ManagedPath {
         {
             return Err(Error::ManagedPathTraversal(path));
         }
-
+        if path
+            .as_os_str()
+            .as_bytes()
+            .split(|&byte| byte == b'/')
+            .any(|segment| segment == b"." || segment == b"..")
+        {
+            return Err(Error::ManagedPathTraversal(path));
+        }
         Ok(Self(path))
     }
 

@@ -14,6 +14,7 @@ pub enum FsOperation {
 
     CreateSymlink,
     ReadSymlink,
+    CopySymlink,
     RemoveSymlink,
 
     ReadFile,
@@ -33,6 +34,7 @@ impl fmt::Display for FsOperation {
             FsOperation::CreateDir => "create directory",
             FsOperation::CreateSymlink => "create symlink",
             FsOperation::ReadSymlink => "read symlink",
+            FsOperation::CopySymlink => "copy symlink",
             FsOperation::RemoveSymlink => "remove symlink",
             FsOperation::ReadFile => "read file",
             FsOperation::WriteFile => "write file",

@@ -167,6 +167,10 @@ impl Filesystem for RealFileSystem {
         fs::remove_dir(path).map_err(Error::io_single(FsOperation::RemoveDir, path))
     }
 
+    fn remove_directory_all(&mut self, path: &Path) -> Result<()> {
+        fs::remove_dir_all(path).map_err(Error::io_single(FsOperation::RemoveDir, path))
+    }
+
     fn write_file(&mut self, path: &Path, content: &[u8]) -> Result<()> {
         self.write_file_impl(path, content)
             .map_err(Error::io_single(FsOperation::WriteFile, path))
@@ -191,6 +195,13 @@ impl Filesystem for RealFileSystem {
 
     fn create_symlink(&mut self, target: &Path, link: &Path) -> Result<()> {
         symlink(target, link).map_err(Error::io_double(FsOperation::CreateSymlink, link, target))
+    }
+
+    fn copy_symlink(&mut self, from: &Path, to: &Path) -> Result<()> {
+        let target =
+            fs::read_link(from).map_err(Error::io_single(FsOperation::ReadSymlink, from))?;
+
+        symlink(&target, to).map_err(Error::io_double(FsOperation::CopySymlink, from, to))
     }
 
     fn remove_symlink(&mut self, path: &Path) -> Result<()> {

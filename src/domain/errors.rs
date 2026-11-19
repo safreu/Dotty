@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::domain::BackupId;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
@@ -19,4 +21,7 @@ pub enum Error {
     InvalidManagedPath(PathBuf),
     #[error("failed to strip path prefix: {0}")]
     StripPrefix(#[from] std::path::StripPrefixError),
+
+    #[error("backup with ID {0} already exists")]
+    DuplicateBackupId(BackupId),
 }

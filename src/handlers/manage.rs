@@ -50,7 +50,11 @@ impl ManageHandler {
             )
             .build();
 
-        PlanService::run(&plan)?;
+        PlanService::run(
+            &plan,
+            paths.static_dirs().backups_dir(),
+            &paths.static_dirs().backups_toml(),
+        )?;
 
         Ok(())
     }
